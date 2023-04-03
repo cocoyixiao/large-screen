@@ -24,7 +24,6 @@
    },
    methods: {
     initRoll(num, dis) {
-      clearTimeout(this.timer)
       this.oldNumber = num
       const arr = this.oldNumber.toString().split('')
       this.orderNum = arr
@@ -35,22 +34,24 @@
     },
     // 定时增长数字
     increaseNumber(dis) {
-      console.log(dis)
       const time = 5
       if (!dis) {
         return
       } else {
         const rollTime = parseInt((time * 60) / dis)
+        clearTimeout(this.timer)
         this.startTimeout(rollTime, dis)
       }
     },
     startTimeout(rollTime, max) {
+      console.log(this.oldNumber)
       this.timer = setTimeout(()=> {
         this.oldNumber++
-        if (this.oldNumber < (this.oldNumber + max )) {
-          this.startTimeout(rollTime, max)
-        } else {
+        if (this.oldNumber > (this.oldNumber + max )) {
           clearTimeout(this.timer)
+          return
+        } else {
+          this.startTimeout(rollTime, max)
         }
         const arr = this.oldNumber.toString().split('')
         this.orderNum = arr

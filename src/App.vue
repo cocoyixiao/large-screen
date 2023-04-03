@@ -1,11 +1,6 @@
 <template>
 <div id="app">
-  <ScaleBox
-    :width="1920"
-    :height="1080"
-    bgc="transparent"
-    :delay="100"
-  >
+  <ScaleBox :width="1920" :height="1080" bgc="transparent" :delay="100">
     <template>
       <div class="login-area" v-if="!hanLogin">
         <div class="login area">
@@ -13,7 +8,7 @@
           <div class="login-content">
             <div class="pwd-line">
               <span>密码：</span>
-              <input v-model="password" type="text" @keyup.enter="submit"/>
+              <input v-model="password" type="text" @keyup.enter="submit" />
             </div>
             <p class="error-msg" v-if="errorMsg">{{ errorMsg }}</p>
             <button class="login-btn" @click="submit">登录</button>
@@ -27,11 +22,11 @@
           <p class="header-bg"></p>
         </div>
         <div class="wrapper">
-          <LeftSider ref="leftSiderRef"/>
+          <LeftSider ref="leftSiderRef" />
           <div class="content">
             <div class="total-content">
               <div class="patient total-area">
-                <RollNumber ref="rollPatientRef"/>
+                <RollNumber ref="rollPatientRef" />
                 <!-- <p class="number" ref="patientRef">{{ todayPatient }}</p> -->
                 <p class="total-title">今日服务患者</p>
               </div>
@@ -40,12 +35,12 @@
                 <p class="total-title">今日接诊医生</p>
               </div>
             </div>
-            <MonthData ref="monthRef"/>
+            <MonthData ref="monthRef" />
             <div class="map-waper">
-              <MapChina ref="mapRef"/>
+              <MapChina ref="mapRef" />
             </div>
           </div>
-          <RightSider ref="rightSiderRef"/>
+          <RightSider ref="rightSiderRef" />
         </div>
       </div>
     </template>
@@ -60,10 +55,21 @@ import MonthData from './components/MonthData.vue'
 import LeftSider from './components/LeftSider.vue'
 import RightSider from './components/RightSider.vue'
 import RollNumber from './components/RollNumber.vue'
-import { login, indexData, getDoctorDatas } from './api/coin'
-import { setToken, getToken } from './utils/auth'
-import { getAppToken } from './utils/get-token'
-import { queryParams } from './utils/_util'
+import {
+  login,
+  indexData,
+  getDoctorDatas
+} from './api/coin'
+import {
+  setToken,
+  getToken
+} from './utils/auth'
+import {
+  getAppToken
+} from './utils/get-token'
+import {
+  queryParams
+} from './utils/_util'
 export default {
   name: 'App',
   components: {
@@ -74,7 +80,7 @@ export default {
     RightSider,
     RollNumber
   },
-  data () {
+  data() {
     return {
       hanLogin: false,
       todayPatient: 0,
@@ -88,7 +94,8 @@ export default {
       wenzhenNumber: 0,
       updateTime: 5 * 60 * 1000,
       password: '',
-      errorMsg: ''
+      errorMsg: '',
+      timer: null
     }
   },
   mounted() {
@@ -110,7 +117,7 @@ export default {
   },
   watch: {
     password(val) {
-      if(!val) {
+      if (!val) {
         this.errorMsg = ''
       }
     }
@@ -124,8 +131,8 @@ export default {
           this.errorMsg = res.message
           return
         }
-        if (res.token) {
-          const token = res.token
+        if (res.code===200) {
+          const token = res.data.token
           setToken(token)
           this.initDatas()
         }
@@ -138,46 +145,51 @@ export default {
     },
     initTime() {
       this.creatTime()
-      setInterval(()=> {
+      setInterval(() => {
         this.creatTime()
       }, 1000)
     },
     getIndexDatas() {
-      indexData({}).then(res=> {
-        this.indexData = res
-        this.$refs.rightSiderRef.initTarget(res.target_per)
-        this.updateDatas()
+      indexData({}).then(res => {
+        if (!res.code) {
+          this.hanLogin = false
+          return
+        } else {
+          this.hanLogin = true
+          this.indexData = res.data
+          this.$refs.rightSiderRef.initTarget(res.data.target_per)
+          this.updateDatas()
+        }
       })
     },
     updateDatas() {
-      getDoctorDatas({}).then(res=> {
+      getDoctorDatas({}).then(data => {
+        const res = data.data
         const result = res.wenzhenNum
         // 中间大数字
         this.todayPatientOld = this.todayPatient || result.today.pat_num
         this.todayPatient = result.today.pat_num
         const disPat = this.todayPatient - this.todayPatientOld
-        this.$refs.rollPatientRef.initRoll(this.todayPatient, disPat)
+        console.log(this.todayPatientOld, disPat)
+        this.$refs.rollPatientRef.initRoll(this.todayPatientOld, disPat)
 
         this.todayDoctorOld = this.todayDoctor || result.today.doc_num
         this.todayDoctor = result.today.doc_num
         const disDoc = this.todayDoctor - this.todayDoctorOld
-        this.$refs.rollDoctorRef.initRoll(this.todayDoctor, disDoc)
+        this.$refs.rollDoctorRef.initRoll(this.todayDoctorOld, disDoc)
 
         this.wenzhenNumber = result.today.wenzhen_num
 
         // 左侧数据计算
         this.resetLeftData()
-        if (!this.isUpdate) {
-          // 右侧医生列表
-          this.$refs.rightSiderRef.initList(result.doctorList)
-          // 初始化中间数据
-          this.$refs.monthRef.init(this.indexData.history_num)
-          this.$refs.mapRef.init(this.indexData.pharmacyorder30)
-        }
-        // 开启数据刷新
-        setTimeout(()=> {
+        // 右侧医生列表
+        this.$refs.rightSiderRef.initList(result.doctorList)
+        // 初始化中间数据
+        this.$refs.monthRef.init(this.indexData.history_num)
+        this.$refs.mapRef.init(this.indexData.pharmacyorder30)
+        
+        this.timer = setTimeout(()=> {
           this.updateDatas()
-          this.isUpdate = true
         }, this.updateTime)
       })
     },
@@ -189,7 +201,7 @@ export default {
       const weekData = wzNum.week.wenzhen_num + this.wenzhenNumber
       leftRef.initWenZhen(yearData, monthData, weekData)
 
-      leftRef.initManWoman(wzNum.year.man_per/100, wzNum.year.woman_per/100)
+      leftRef.initManWoman(wzNum.year.man_per / 100, wzNum.year.woman_per / 100)
 
       leftRef.initSuggest(this.indexData.complain)
     },
@@ -206,10 +218,10 @@ export default {
     },
     initBodySize() {
       var bodyStyle = document.createElement('style')
-      bodyStyle.innerHTML=`body{width:1920px; height:1080px!important;}`
+      bodyStyle.innerHTML = `body{width:1920px; height:1080px!important;}`
       document.documentElement.firstElementChild.appendChild(bodyStyle)
 
-      function refreshScale(){
+      function refreshScale() {
         let docWidth = document.documentElement.clientWidth;
         let docHeight = document.documentElement.clientHeight;
         var designWidth = 1920
@@ -217,16 +229,16 @@ export default {
         var widthRatio = docWidth / designWidth
         var heightRatio = docHeight / designHeight; // 缩放比例
         document.body.style = `transform:scale(" + widthRatio + "," + heightRatio + ");transform-origin:left top;`;
-      // 应对浏览器 全屏切换前后 窗口因短暂滚动条问题出现未占满情况
-        setTimeout(function(){
-          var lateWidth= document.documentElement.clientWidth,
+        // 应对浏览器 全屏切换前后 窗口因短暂滚动条问题出现未占满情况
+        setTimeout(function () {
+          var lateWidth = document.documentElement.clientWidth,
             lateHeight = document.documentElement.clientHeight;
-          if(lateWidth===docWidth) return;
+          if (lateWidth === docWidth) return;
 
-          widthRatio = lateWidth/ designWidth
-          heightRatio = lateHeight/ designHeight
+          widthRatio = lateWidth / designWidth
+          heightRatio = lateHeight / designHeight
           document.body.style = "transform:scale(" + widthRatio + "," + heightRatio + ");transform-origin:left top;"
-        },0)
+        }, 0)
       }
       refreshScale()
 

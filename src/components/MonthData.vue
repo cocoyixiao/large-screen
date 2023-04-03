@@ -20,7 +20,7 @@ export default {
 
       const dateArr = data.map(item=> item.date.substring(5).replace('-', '/')).filter((item, index) => index%2!==0)
       const wenzhenArr = data.map(item => item.wenzhen_num).filter((item, index) => index%2!==0)
-      console.log(dateArr)
+      // console.log(dateArr)
 
       // var json2 = {
       //   chart0: {

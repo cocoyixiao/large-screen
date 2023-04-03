@@ -43,17 +43,6 @@ const shuffle = (arr) => {
   }
   return arr
 };
-// function randomNumber(min, max, precision) {
-//   if (arguments.length === 1) {
-//     max = min
-//     min = 0
-//   }
-
-//   const diff = max - min
-//   const res = Math.random() * diff + min
-
-//   return Number(res.toFixed(precision))
-// }
 
 export default {
   name: 'mapTest',
@@ -61,7 +50,7 @@ export default {
   // 第二步
   methods: {
     init(data) {
-
+      const allProvince = china.features.map(item => item.properties.name)
       const visualMap = {
         bottom: 20,
         left: 20,
@@ -98,22 +87,9 @@ export default {
           color: '#ffffff'
         }
       }
-      data.forEach((item, i)=> {
-        if (item.province === "蔡甸区") {
-          data.splice(i, 1)
-        }
-      })
-      data.forEach((item, i)=> {
-        if (item.province === "黔西南布依族苗族自治州") {
-          data.splice(i, 1)
-        }
-      })
-      data.forEach((item, i)=> {
-        if (item.province === "闽侯县") {
-          data.splice(i, 1)
-        }
-      })
-      let geoCoordMap = require('../assets/data-level.json')
+
+      // console.log(allProvince)
+      
       data.forEach(item => {
         if (item.province.includes('省')){
           this.$set(item, 'name', item.province.replace('省', ''))
@@ -136,6 +112,18 @@ export default {
         } else if (item.province.includes('澳门')) {
           this.$set(item, 'name', '澳门')
         }
+      })
+    
+      data = data.filter(item => !!item.name)
+      data.forEach((item, index) => {
+        if (!allProvince.includes(item.name)) {
+          data.splice(index, 1)
+        }
+      })
+      
+      // return false
+      let geoCoordMap = require('../assets/data-level.json')
+      data.forEach(item => {
         this.$set(item, 'value', item.per)
         this.$set(item, 'count', 0)
         yaofangData.forEach(yf => {
@@ -168,8 +156,8 @@ export default {
       //生成全国药房的数量
       const cityArr = filterYaofangCity()
       // 有药房省有药房的数量
-      const citys = cityArr.filter(item => item.count > 0)
-      console.log(citys)
+      // const citys = cityArr.filter(item => item.count > 0)
+      // console.log(citys)
       // 比较函数
       // function compare(a, b) {
       //   let comparison = 0;
@@ -186,6 +174,7 @@ export default {
       // 按药房的数量生成全国各省市坐标
       function creatAllPositions() {
         let arr = []
+        // console.log(data)
         data.forEach(item => {
           const obj = JSON.parse(JSON.stringify(item))
           if (!obj.local) {
@@ -310,7 +299,7 @@ export default {
       //   return temp
       // }
       const movePos = creatLines()
-      console.log(movePos)
+      // console.log(movePos)
 
       var allData = {
         "citys": allCitys,

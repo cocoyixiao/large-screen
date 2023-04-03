@@ -33,8 +33,8 @@ http.interceptors.request.use(
 http.interceptors.response.use(
   response => {
     let { data } = response
-    if (data.code ===200) {
-      return data.data
+    if (data ===200) {
+      return data
     } else {
       return data
     }
