@@ -555,6 +555,8 @@ body{
   color: #fff;
   font-size: 26px;
   margin-top: 48px;
+  position: relative;
+  z-index: 10;
 }
 .circle-ring{
   fill: none;
